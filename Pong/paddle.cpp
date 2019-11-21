@@ -2,6 +2,11 @@
 #include <iostream>
 #include "paddle.hpp"
 
+void Paddle::setPosition(float x) {
+	this->x = x;
+	this->paddleObj.setPosition(this->x, this->y);
+}
+
 int Paddle::getScore() {
 	return this->score;
 }

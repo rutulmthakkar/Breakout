@@ -80,4 +80,5 @@ public:
 	sf::Text getText();
 	bool getHasSpeedUpEffect();
 	bool gethasMakePaddleLargerEffect();
+	void setTexture(sf::Texture *t);
 };

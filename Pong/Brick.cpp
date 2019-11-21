@@ -5,6 +5,10 @@
 #include <iostream>
 using namespace std;
 
+void Brick::setTexture(sf::Texture *t) {
+	this->texture = t;
+	this->sprite.setTexture(*t);
+}
 void Brick::draw(sf::RenderWindow *window) {
 	//window->draw(this->text);
 	window->draw(this->sprite);

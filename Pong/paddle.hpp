@@ -28,7 +28,7 @@ public:
 		this->width = width;
 		this->originalWidth = width;
 		this->height = height;
-		this->speed = 20;
+		this->speed = 5;
 		paddleObj.setSize(sf::Vector2f(this->width, this->height));
 		paddleObj.setOutlineThickness(1);
 		paddleObj.setPosition(x, y);
@@ -52,5 +52,6 @@ public:
 	int getScore();
 	void increaseScore(int amt);
 	void IncreasePaddleWidth();
+	void setPosition(float x);
 };
 #endif

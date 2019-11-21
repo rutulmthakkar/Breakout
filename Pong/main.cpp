@@ -12,6 +12,12 @@ Extra Done : L,M,N
 -> multipe levels (0,1) (objective L)
 -> Sounds integrated for all types of events
 -> has powerup to make paddle width bigger (objective N)
+-> texture changes depending on number of hits required to destroy the brick is left
+1 -> orange
+2 -> Blue
+3 -> red
+4 -> green
+-> any brick with special effect are rendered with grey texture
 
 */
 #include <SFML/Graphics.hpp>
@@ -40,12 +46,14 @@ sf::Sound soundGameOver;
 sf::Sound soundHitWall;
 sf::Sound soundlevelup;
 
-void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval);
-void populateBricksLevel2(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tblue, sf::Texture *tOval);
+void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval, sf::Texture *tblue, sf::Texture *tRed);
+void populateBricksLevel2(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tblue, sf::Texture *tOval, sf::Texture *tGreen, sf::Texture *tRed);
 void loadSound();
 
 int main()
 {
+	bool movePaddle = false;
+	int directionMovePaddle = 0;
 	bool gameOver = false;
 	bool pressedSpace = false;
 	bool hasPlayedGameOverSound = false;
@@ -65,6 +73,21 @@ int main()
 	else {
 		cout << "SUCCESS LOADED TEXTURE BLUE MAIN" << endl;
 	}
+	sf::Texture tRed;
+	if (!tRed.loadFromFile("red.jpg")) {
+		cout << "ERROR LOADING TEXTURE RED in MAIN !" << endl;
+	}
+	else {
+		cout << "SUCCESS LOADED TEXTURE RED MAIN" << endl;
+	}
+
+	sf::Texture tGreen;
+	if (!tGreen.loadFromFile("green.jpg")) {
+		cout << "ERROR LOADING TEXTURE GREEN in MAIN !" << endl;
+	}
+	else {
+		cout << "SUCCESS LOADED TEXTURE GREEN MAIN" << endl;
+	}
 	sf::Texture tOval;
 	if (!tOval.loadFromFile("grey.jpg")) {
 		cout << "ERROR LOADING TEXTURE GREY in MAIN !" << endl;
@@ -74,7 +97,7 @@ int main()
 	}
 	loadSound();
 	vector<Brick> bricks;
-	populateBricks(&bricks, &t, &tOval);
+	populateBricks(&bricks, &t, &tOval, &tGreen, &tRed);
 
 	sf::RenderWindow window(sf::VideoMode(400, 400), "Breakout");
 	window.setFramerateLimit(60);
@@ -127,14 +150,63 @@ int main()
 
 	sf::Clock clock;
 	clock.restart();
+	sf::Mouse mouse;
+	sf::Vector2i mousePosition = mouse.getPosition(window);
+	sf::Vector2f oldMousePositionFloat(mousePosition.x * 1.0f, mousePosition.y * 1.0f);
+
 	while (window.isOpen())
 	{
 		deltaTime = clock.getElapsedTime().asMilliseconds();
 		clock.restart();
-
+		
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
+			if (event.type == sf::Event::MouseMoved && !gameOver)
+			{
+				sf::Vector2f newMousePositionFloat(event.mouseMove.x * 1.0f, event.mouseMove.y * 1.0f);
+				if (newMousePositionFloat.x < oldMousePositionFloat.x && paddle.getXPosition() > newMousePositionFloat.x) {
+					movePaddle = true;
+					directionMovePaddle = -1;
+				}
+				else if(newMousePositionFloat.x > oldMousePositionFloat.x && paddle.getXPosition() < newMousePositionFloat.x) {
+					movePaddle = true;
+					directionMovePaddle = 1;
+				}
+				else {
+					movePaddle = false;
+					directionMovePaddle = 0;
+				}
+				oldMousePositionFloat = newMousePositionFloat;
+			}
+			else {
+				movePaddle = false;
+				directionMovePaddle = 0;
+			}
+
+			/*if (event.type == sf::Event::MouseEntered)
+			{
+				mousePosition = mouse.getPosition(window);
+				sf::Vector2f newMousePositionFloat(mousePosition.x * 1.0f, mousePosition.y * 1.0f);
+				if (newMousePositionFloat.x < oldMousePositionFloat.x) {
+					movePaddle = true;
+					directionMovePaddle = -1;
+				}
+				else if (newMousePositionFloat.x > oldMousePositionFloat.x) {
+					movePaddle = true;
+					directionMovePaddle = 1;
+				}
+				else {
+					movePaddle = false;
+					directionMovePaddle = 0;
+				}
+				oldMousePositionFloat = newMousePositionFloat;
+			}*/
+
+			if (event.type == sf::Event::MouseLeft) {
+				movePaddle = false;
+				directionMovePaddle = 0;
+			}
 			if (event.type == sf::Event::Closed)
 				window.close();
 
@@ -154,7 +226,7 @@ int main()
 					else {
 						//restart game
 						currentLevel = 0;
-						populateBricks(&bricks, &t, &tOval);
+						populateBricks(&bricks, &t, &tOval, &tGreen, &tRed);
 						paddle.resetGame();
 						ball.resetGame();
 						pressedSpace = false;
@@ -167,14 +239,25 @@ int main()
 
 				}
 			}
+
+			if (event.type == sf::Event::KeyReleased) {
+				if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right) {
+					movePaddle = false;
+					directionMovePaddle = 0;
+				}
+			}
 			if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::Left && !gameOver) {
-					paddle.move(paddle.getSpeed(), -1);
-					ball.repositionBall(&paddle);
+					movePaddle = true;
+					directionMovePaddle = -1;
+					/*paddle.move(paddle.getSpeed(), -1);
+					ball.repositionBall(&paddle);*/
 				}
 				if (event.key.code == sf::Keyboard::Right && !gameOver) {
-					paddle.move(paddle.getSpeed(), 1);
-					ball.repositionBall(&paddle);
+					movePaddle = true;
+					directionMovePaddle = 1;
+					/*paddle.move(paddle.getSpeed(), 1);
+					ball.repositionBall(&paddle);*/
 				}
 
 				if (event.key.code == sf::Keyboard::Space) {
@@ -192,7 +275,7 @@ int main()
 					else {
 						//restart game
 						currentLevel = 0;
-						populateBricks(&bricks, &t, &tOval);
+						populateBricks(&bricks, &t, &tOval, &tGreen, &tRed);
 						paddle.resetGame();
 						ball.resetGame();
 						pressedSpace = false;
@@ -205,6 +288,11 @@ int main()
 					
 				}
 			}
+		}
+
+		if (movePaddle && directionMovePaddle != 0) {
+			paddle.move(paddle.getSpeed(), directionMovePaddle);
+			ball.repositionBall(&paddle);
 		}
 
 		window.clear();
@@ -237,13 +325,13 @@ int main()
 			if (bricks.size() == 0 && ball.getY() >= 220.0f) {
 				switch (currentLevel) {
 					case 0:
-						populateBricks(&bricks, &t, &tOval);
+						populateBricks(&bricks, &t, &tOval, &tBlue, &tRed);
 						break;
 					case 1:
-						populateBricksLevel2(&bricks, &t, &tBlue, &tOval);
+						populateBricksLevel2(&bricks, &t, &tBlue, &tOval, &tGreen, &tRed);
 						break;
 					default:
-						populateBricks(&bricks, &t, &tOval);
+						populateBricks(&bricks, &t, &tOval, &tBlue, &tRed);
 						break;
 				}
 				
@@ -252,6 +340,23 @@ int main()
 		}
 		paddle.draw(&window);
 		for (int i = 0; i < bricks.size(); i++) {
+			if (!bricks[i].getHasSpeedUpEffect() && !bricks[i].gethasMakePaddleLargerEffect()) {
+				switch (bricks[i].getNoOfHitsRequired()) {
+					case 1:
+						bricks[i].setTexture(&t);
+						break;
+					case 2:
+						bricks[i].setTexture(&tBlue);
+						break;
+					case 3:
+						bricks[i].setTexture(&tRed);
+						break;
+					case 4:
+						bricks[i].setTexture(&tGreen);
+						break;
+				}
+			}
+			
 			bricks[i].draw(&window);
 		}
 		ball.draw(&window);
@@ -263,7 +368,7 @@ int main()
 	return 0;
 }
 
-void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval) {
+void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval, sf::Texture *tblue, sf::Texture *tRed) {
 	float brickWidth = 80.0f;
 	float brickHeight = 25.0f;
 	float posXRow1 = 70.0f;
@@ -288,7 +393,7 @@ void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval) {
 				bricks->push_back(brick2);
 			}
 			else {
-				Brick brick22(i + 1, sf::Vector2f(posXRow2, posYRow2), brickWidth - 10.0f, brickHeight, t, 2, false, false);
+				Brick brick22(i + 1, sf::Vector2f(posXRow2, posYRow2), brickWidth - 10.0f, brickHeight, tblue, 2, false, false);
 				bricks->push_back(brick22);
 			}
 
@@ -306,7 +411,7 @@ void populateBricks(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tOval) {
 	isArrayBeingFilled = false;
 }
 
-void populateBricksLevel2(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tblue, sf::Texture *tOval) {
+void populateBricksLevel2(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tblue, sf::Texture *tOval, sf::Texture *tGreen, sf::Texture *tRed) {
 	float brickWidth = 80.0f;
 	float brickHeight = 25.0f;
 	float posXRow1 = 70.0f;
@@ -324,7 +429,7 @@ void populateBricksLevel2(vector<Brick> *bricks, sf::Texture *t, sf::Texture *tb
 	for (int i = 0; i < 18; i++) {
 		if (i < 4) {
 			//row 1 4 bricks
-			Brick brick1(i + 1, sf::Vector2f(posXRow1, posYRow1), brickWidth, brickHeight, t, 1, false, false);
+			Brick brick1(i + 1, sf::Vector2f(posXRow1, posYRow1), brickWidth, brickHeight, tRed, 3, false, false);
 			posXRow1 += 85.0f;
 			bricks->push_back(brick1);
 		}
