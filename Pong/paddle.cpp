@@ -45,7 +45,7 @@ void Paddle::move(int amt,int direction) {
 		}
 		this->paddleObj.setPosition(this->x, this->y);
 	}
-	else {
+	else if(direction == 1) {
 		//move right
 		this->x = this->x + amt;
 		if (this->x > (400.0f - this->width/2.0f - 10.0f)) {

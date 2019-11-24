@@ -5,7 +5,7 @@ Date: 17 Nov 2019
 
 Done Main Parts: A,B,C,D,E,F,G,H,I,J,K
 Extra Done : L,M,N
-
+-> mouse and keyboard both inputs implemented
 -> More than one time hit required to destroy brick (determined by noOfHitsRequired attribute) (objective M)
 -> bricks that speed up ball (objective M) 
 -> Multiple textures
@@ -53,6 +53,8 @@ void loadSound();
 int main()
 {
 	bool movePaddle = false;
+	bool isLeftArrowPress = false;
+	bool isRightArrowPress = false;
 	int directionMovePaddle = 0;
 	bool gameOver = false;
 	bool pressedSpace = false;
@@ -165,48 +167,25 @@ int main()
 			if (event.type == sf::Event::MouseMoved && !gameOver)
 			{
 				sf::Vector2f newMousePositionFloat(event.mouseMove.x * 1.0f, event.mouseMove.y * 1.0f);
-				if (newMousePositionFloat.x < oldMousePositionFloat.x && paddle.getXPosition() > newMousePositionFloat.x) {
-					movePaddle = true;
-					directionMovePaddle = -1;
+
+				if (newMousePositionFloat.x <= 10.0f + paddle.getWidth() / 2) {
+					paddle.setPosition(10.0f + paddle.getWidth() / 2);
+					ball.repositionBall(&paddle);
 				}
-				else if(newMousePositionFloat.x > oldMousePositionFloat.x && paddle.getXPosition() < newMousePositionFloat.x) {
-					movePaddle = true;
-					directionMovePaddle = 1;
+				else if (newMousePositionFloat.x >= 390.0f - paddle.getWidth() / 2) {
+					paddle.setPosition(390.0f - paddle.getWidth() / 2);
+					ball.repositionBall(&paddle);
 				}
 				else {
-					movePaddle = false;
-					directionMovePaddle = 0;
+					paddle.setPosition(newMousePositionFloat.x);
+					ball.repositionBall(&paddle);
 				}
-				oldMousePositionFloat = newMousePositionFloat;
 			}
 			else {
 				movePaddle = false;
 				directionMovePaddle = 0;
 			}
 
-			/*if (event.type == sf::Event::MouseEntered)
-			{
-				mousePosition = mouse.getPosition(window);
-				sf::Vector2f newMousePositionFloat(mousePosition.x * 1.0f, mousePosition.y * 1.0f);
-				if (newMousePositionFloat.x < oldMousePositionFloat.x) {
-					movePaddle = true;
-					directionMovePaddle = -1;
-				}
-				else if (newMousePositionFloat.x > oldMousePositionFloat.x) {
-					movePaddle = true;
-					directionMovePaddle = 1;
-				}
-				else {
-					movePaddle = false;
-					directionMovePaddle = 0;
-				}
-				oldMousePositionFloat = newMousePositionFloat;
-			}*/
-
-			if (event.type == sf::Event::MouseLeft) {
-				movePaddle = false;
-				directionMovePaddle = 0;
-			}
 			if (event.type == sf::Event::Closed)
 				window.close();
 
@@ -218,6 +197,9 @@ int main()
 						if (paddle.getLife() == 0) {
 							gameOver = true;
 							hasPlayedGameOverSound = false;
+							isLeftArrowPress = false;
+							isRightArrowPress = false;
+							movePaddle = false;
 							gameStatusText.setString("GAME OVER\nPress Space to restart!");
 							pressedSpace = false;
 							currentLevel = 0;
@@ -231,6 +213,9 @@ int main()
 						ball.resetGame();
 						pressedSpace = false;
 						gameOver = false;
+						isLeftArrowPress = false;
+						isRightArrowPress = false;
+						movePaddle = false;
 						hasPlayedGameOverSound = false;
 						gameStatusText.setString("GAME OVER\nPress Space to restart!");
 						lifeLeftText.setString("Life : " + to_string(paddle.getLife()));
@@ -241,25 +226,36 @@ int main()
 			}
 
 			if (event.type == sf::Event::KeyReleased) {
-				if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right) {
-					movePaddle = false;
+				if (event.key.code == sf::Keyboard::Left) {
+					isLeftArrowPress = false;
 					directionMovePaddle = 0;
+				}
+				if (event.key.code == sf::Keyboard::Right) {
+					isRightArrowPress = false;
+					directionMovePaddle = 0;
+				}
+				if (!isLeftArrowPress && !isRightArrowPress) {
+					movePaddle = false;
+				}
+				else {
+					movePaddle = true;
 				}
 			}
 			if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::Left && !gameOver) {
-					movePaddle = true;
+					isLeftArrowPress = true;
 					directionMovePaddle = -1;
-					/*paddle.move(paddle.getSpeed(), -1);
-					ball.repositionBall(&paddle);*/
 				}
 				if (event.key.code == sf::Keyboard::Right && !gameOver) {
-					movePaddle = true;
+					isRightArrowPress = true;
 					directionMovePaddle = 1;
-					/*paddle.move(paddle.getSpeed(), 1);
-					ball.repositionBall(&paddle);*/
 				}
-
+				if (!isLeftArrowPress && !isRightArrowPress) {
+					movePaddle = false;
+				}
+				else {
+					movePaddle = true;
+				}
 				if (event.key.code == sf::Keyboard::Space) {
 					if (!gameOver) {
 						pressedSpace = true;
@@ -269,6 +265,9 @@ int main()
 							hasPlayedGameOverSound = false;
 							gameStatusText.setString("GAME OVER\nPress Space to restart!");
 							pressedSpace = false;
+							isLeftArrowPress = false;
+							isRightArrowPress = false;
+							movePaddle = false;
 							currentLevel = 0;
 						}
 					}
@@ -280,6 +279,9 @@ int main()
 						ball.resetGame();
 						pressedSpace = false;
 						gameOver = false;
+						isLeftArrowPress = false;
+						isRightArrowPress = false;
+						movePaddle = false;
 						hasPlayedGameOverSound = false;
 						gameStatusText.setString("GAME OVER\nPress Space to restart!");
 						lifeLeftText.setString("Life : " + to_string(paddle.getLife()));
@@ -290,7 +292,7 @@ int main()
 			}
 		}
 
-		if (movePaddle && directionMovePaddle != 0) {
+		if (movePaddle) {
 			paddle.move(paddle.getSpeed(), directionMovePaddle);
 			ball.repositionBall(&paddle);
 		}
